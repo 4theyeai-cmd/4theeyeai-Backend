@@ -1,0 +1,103 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  v2ray:
+    image: v2fly/v2fly-core
+    container_name: v2ray_proxy
+    restart: always
+    command: ["run", "-c", "/etc/v2ray/config.json"]
+    volumes:
+      - ./v2ray_config:/etc/v2ray
+    ports:
+      - "1080:1080"
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ../AI-Airport-Bot
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    restart: always
+    depends_on:
+      - db
+      - v2ray
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - KNOWLEDGE_SHEET_ID=${KNOWLEDGE_SHEET_ID}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=5432
+      - POSTGRES_SERVER=db
+      - ELEVEN_LABS_API_KEY=${ELEVEN_LABS_API_KEY}
+      - ELEVEN_LABS_VOICE_ID=${ELEVEN_LABS_VOICE_ID}
+      - AVASHOW_GATEWAY_TOKEN=${AVASHOW_GATEWAY_TOKEN}
+      - AVASHOW_API_URL=${AVASHOW_API_URL}
+      - EXTERNAL_CHAT_SERVICE_URL=${EXTERNAL_CHAT_SERVICE_URL}
+      - EXTERNAL_EXTRACTINFO_SERVICE_URL=${EXTERNAL_EXTRACTINFO_SERVICE_URL}
+      - EXTERNAL_ELEVENLABS_SERVICE_URL=${EXTERNAL_ELEVENLABS_SERVICE_URL}
+      - HTTP_PROXY=socks5://v2ray:1080
+      - HTTPS_PROXY=socks5://v2ray:1080
+      - PORT=4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ../AI-Airport-Bot/audios:/app/audios
+      - ../AI-Airport-Bot/bin:/app/bin
+      - ../AI-Airport-Bot/credentials.json:/app/credentials.json
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ../AI-AIrportBot-Front
+      dockerfile: Dockerfile
+    container_name: frontend_app
+    restart: always
+
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - CIP_TOKEN=${CIP_TOKEN}
+      - CIP_BASE_URL=${CIP_BASE_URL}
+      - CIP_FLIGHT_SEARCH_BASE_URL=${CIP_FLIGHT_SEARCH_BASE_URL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  site-frontend:
+    build:
+      context: ../4theyeai-site/4theyeai-site
+      dockerfile: Dockerfile
+    container_name: new_react_app
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    ports:
+      - "8080:80"  # پورت 8080 برای Nginx داخل کانتینر
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+
+networks:
+  app-network:
+    driver: bridge
