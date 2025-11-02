@@ -1,0 +1,24 @@
+{
+  "name": "ai-airport-bot-back",
+  "version": "1.0.0",
+  "description": "Backend API for AI Airport Bot",
+  "scripts": {
+    "test:cypress": "cypress run",
+    "test:cypress:open": "cypress open",
+    "test:pytest": "pytest",
+    "test:pytest:cov": "pytest --cov=api --cov-report=html",
+    "test:all": "pytest && cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0"
+  },
+  "keywords": [
+    "fastapi",
+    "ai",
+    "airport",
+    "bot"
+  ],
+  "author": "",
+  "license": "ISC"
+}
+

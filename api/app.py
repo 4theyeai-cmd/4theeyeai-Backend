@@ -21,6 +21,7 @@ from api.services.openai_service import OpenAIService
 from api.services.google_sheets_service import GoogleSheetsService
 
 from api.routes.assistant_routes import router as assistant_routes
+from api.routes.knowledge_base_routes import router as knowledge_base_router
 
 api_key = os.getenv("OPENAI_API_KEY")
 if api_key:
@@ -93,6 +94,7 @@ app.include_router(message_routes, prefix="/api/v1", tags=["messages"])
 app.include_router(trip_routes, prefix="/api/v1", tags=["trip"])
 app.include_router(extract_info_routes.router, prefix="/api/v1", tags=["extract-info"])
 app.include_router(assistant_routes, prefix="/api/v1/aiassistant", tags=["aiassistant"])
+app.include_router(knowledge_base_router, prefix="/api/v1", tags=["knowledge-base"])
 
 
 @app.get("/")
